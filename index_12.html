@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MICROMAC — Sistemas Integrales de Elevación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --gold-dim: #8A6E2F;
+  --black: #060606;
+  --dark: #0F0F0F;
+  --dark2: #161616;
+  --dark3: #1E1E1E;
+  --gray: #999;
+  --gray-light: #D4D0C8;
+  --white: #F7F5F0;
+  /* subtle contrast helpers */
+  --surface: #141414;
+  --border: rgba(201,168,76,.13);
+}
+/* Global subtle contrast: sections alternate slightly */
+.sec { background: var(--black); }
+.sec:nth-of-type(even) { background: var(--dark); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
+body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; font-weight: 300; overflow-x: hidden; max-width: 100%; }
+
+/* ─── CURSOR ─── */
+#cur, #cur-ring {
+  position: fixed; pointer-events: none; z-index: 99999; border-radius: 50%;
+  transform: translate(-50%, -50%); will-change: left, top;
+}
+#cur { width: 10px; height: 10px; background: var(--gold); transition: width .25s, height .25s, background .25s; }
+#cur-ring { width: 38px; height: 38px; border: 1.5px solid var(--gold); opacity: .55; transition: width .3s, height .3s, opacity .3s; }
+body.hov #cur { width: 22px; height: 22px; }
+body.hov #cur-ring { width: 58px; height: 58px; opacity: .9; }
+
+/* ─── NOISE ─── */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:99998;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.022;
+}
+
+/* ─── HEADER ─── */
+header {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  height: 72px; padding: 0 clamp(20px,5vw,60px);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .4s, backdrop-filter .4s, border-color .4s;
+  border-bottom: 1px solid transparent;
+}
+header.sc { background: rgba(8,8,8,.93); backdrop-filter: blur(18px); border-color: rgba(201,168,76,.15); }
+.logo { display:flex; align-items:center; gap:12px; text-decoration:none; cursor:pointer; }
+/* logo-aside-dark.png is white/light on transparent — perfect for dark headers */
+.logo-img { height:38px; width:auto; object-fit:contain; display:block; flex-shrink:0; }
+/* Vertical divider between logo image and name */
+.logo-divider { width:1px; height:28px; background:rgba(201,168,76,.35); flex-shrink:0; }
+.logo-text { display:flex; flex-direction:column; line-height:1; }
+.logo-m { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:var(--white); }
+.logo-s { font-size:7.5px; letter-spacing:2.5px; color:var(--gold); text-transform:uppercase; margin-top:3px; }
+nav { display:flex; align-items:center; gap:clamp(16px,2.5vw,36px); }
+nav a {
+  font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gray);
+  text-decoration:none; cursor:pointer; position:relative; transition:color .3s;
+}
+nav a::after { content:''; position:absolute; bottom:-3px; left:0; width:0; height:1px; background:var(--gold); transition:width .3s; }
+nav a:hover, nav a.act { color:var(--white); }
+nav a:hover::after, nav a.act::after { width:100%; }
+.nav-cta {
+  background:var(--gold)!important; color:var(--black)!important; padding:9px 22px!important;
+  font-weight:500!important; letter-spacing:2px!important;
+  transition:background .3s, transform .2s, box-shadow .3s!important;
+}
+.nav-cta::after { display:none!important; }
+.nav-cta:hover { background:var(--gold-light)!important; transform:translateY(-2px)!important; box-shadow:0 8px 24px rgba(201,168,76,.3)!important; }
+.ham { display:none; flex-direction:column; gap:5px; cursor:pointer; z-index:1001; }
+.ham span { display:block; width:26px; height:1.5px; background:var(--white); transition:all .3s; }
+.ham.o span:nth-child(1) { transform:rotate(45deg) translate(4.5px,4.5px); }
+.ham.o span:nth-child(2) { opacity:0; }
+.ham.o span:nth-child(3) { transform:rotate(-45deg) translate(4.5px,-4.5px); }
+.mob-nav {
+  display:none; position:fixed; inset:0; background:var(--black); z-index:999;
+  flex-direction:column; align-items:center; justify-content:center; gap:36px;
+}
+.mob-nav.o { display:flex; }
+.mob-nav a { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:6px; color:var(--white); text-decoration:none; cursor:pointer; transition:color .3s; }
+.mob-nav a:hover { color:var(--gold); }
+
+/* ─── MAGNET BUTTONS ─── */
+.btn-p, .btn-g {
+  display:inline-flex; align-items:center; gap:12px; cursor:pointer;
+  font-family:'DM Sans',sans-serif; text-decoration:none; border:none;
+  position:relative; overflow:hidden; user-select:none;
+  transition: gap .3s;
+}
+.btn-p {
+  background:var(--gold); color:var(--black);
+  padding:14px 32px; font-size:11px; letter-spacing:3px; text-transform:uppercase; font-weight:500;
+  transition: background .3s, box-shadow .4s, gap .3s;
+}
+.btn-p:hover { background:var(--gold-light); box-shadow:0 12px 40px rgba(201,168,76,.35); gap:20px; }
+.btn-p svg { transition:transform .3s; flex-shrink:0; }
+.btn-p:hover svg { transform:translateX(5px); }
+.btn-g {
+  background:none; color:var(--white); padding:14px 0; font-size:11px; letter-spacing:3px; text-transform:uppercase;
+}
+.btn-g::after { content:''; position:absolute; bottom:8px; left:0; width:100%; height:1px; background:rgba(255,255,255,.3); transition:background .3s; }
+.btn-g:hover { color:var(--gold); }
+.btn-g:hover::after { background:var(--gold); }
+
+/* ─── PAGES ─── */
+.page { display:none; min-height:100vh; overflow-x:hidden; max-width:100%; }
+.page.act { display:block; }
+
+/* ════════════════════════════════
+   HOME — HERO
+════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: min(100vh, 820px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* 96px top = 72px nav + 24px buffer */
+  padding: 96px clamp(24px,6vw,100px) clamp(40px,6vh,72px);
+  overflow: hidden;
+  max-width: 100%;
+}
+.hero-body {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+}
+
+
+/* Photo background */
+.hero-img {
+  position:absolute; inset:0; z-index:0;
+  background: url('https://www.ascensoresmicromac.com/assets/img/various/bg-image.png') center/cover no-repeat;
+overflow:hidden;
+}
+.hero-img::after {
+  content:''; position:absolute; inset:0;
+  background:
+    linear-gradient(to right, rgba(8,8,8,.88) 40%, rgba(8,8,8,.4) 100%),
+    linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,.5) 40%, transparent 70%);
+}
+
+/* SVG elevator shaft overlay */
+.hero-shaft {
+  position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden;
+}
+.hero-shaft svg { width:100%; height:100%; max-width:100%; }
+/* En mobile: zoom al SVG para centrar el ascensor */
+
+
+/* Content */
+.h-eye {
+  font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--gold);
+  display:flex; align-items:center; gap:14px; margin-bottom:24px;
+  opacity:0; animation:fup .8s .2s forwards;
+}
+.h-eye::before { content:''; display:inline-block; width:36px; height:1px; background:var(--gold); }
+.h-title {
+  font-family:'Bebas Neue',sans-serif; line-height:.9; letter-spacing:2px;
+  font-size:clamp(48px,7vw,118px);
+  opacity:0; animation:fup .8s .4s forwards;
+}
+.h-title em { font-family:'Playfair Display',serif; font-style:italic; color:var(--gold); display:block; font-size:.72em; }
+.h-desc {
+  margin-top:28px; font-size:15px; line-height:1.75; color:var(--gray-light); max-width:480px;
+  opacity:0; animation:fup .8s .6s forwards;
+}
+.h-acts { display:flex; gap:24px; margin-top:44px; align-items:center; flex-wrap:wrap; opacity:0; animation:fup .8s .8s forwards; }
+.h-stats {
+  position:absolute; right:clamp(24px,6vw,100px); bottom:clamp(60px,8vh,120px); overflow:hidden;
+  z-index:2; display:flex; flex-direction:column; gap:28px; text-align:right;
+  opacity:0; animation:fup .8s 1.1s forwards;
+}
+.hst-n { font-family:'Bebas Neue',sans-serif; font-size:52px; color:var(--gold); line-height:1; }
+.hst-l { font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gray); }
+
+/* scroll indicator */
+.scrl { position:absolute; bottom:36px; left:50%; transform:translateX(-50%); z-index:2; display:flex; flex-direction:column; align-items:center; gap:8px; opacity:0; animation:fin 1s 1.6s forwards; }
+.scrl span { font-size:8.5px; letter-spacing:3.5px; text-transform:uppercase; color:var(--gray); }
+.scrl-l { width:1px; height:52px; background:linear-gradient(to bottom,var(--gold),transparent); animation:sp 2s ease-in-out infinite; }
+
+@keyframes fup { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fin  { from{opacity:0} to{opacity:1} }
+@keyframes sp   { 0%,100%{transform:scaleY(1);opacity:1} 50%{transform:scaleY(.4);opacity:.4} }
+
+/* ─── MARQUEE ─── */
+.mq { border-top:1px solid rgba(201,168,76,.22); border-bottom:1px solid rgba(201,168,76,.22); padding:16px 0; overflow:hidden; max-width:100%; background:var(--dark); }
+.mq-t { display:flex; gap:56px; width:max-content; animation:mq 22s linear infinite; }
+.mq-i { display:flex; align-items:center; gap:14px; white-space:nowrap; font-size:10.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold-dim); }
+.mq-dot { width:4px; height:4px; background:var(--gold); border-radius:50%; flex-shrink:0; }
+@keyframes mq { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ─── SECTION BASICS ─── */
+.sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.s-eye { font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.s-eye::before { content:''; display:inline-block; width:28px; height:1px; background:var(--gold); }
+.s-ttl { font-family:'Bebas Neue',sans-serif; font-size:clamp(38px,5.5vw,76px); line-height:1; letter-spacing:2px; margin-bottom:56px; }
+.s-ttl span { color:var(--gold); }
+.gold { color:var(--gold); }
+.divider { width:56px; height:1px; background:var(--gold); margin:22px 0; }
+
+/* ─── FEATURES ─── */
+.feat-g { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(201,168,76,.12); border:1px solid rgba(201,168,76,.12); }
+.feat-c { background:var(--surface, #141414); padding:clamp(28px,4vw,52px) clamp(20px,3vw,38px); position:relative; overflow:hidden; transition:background .3s; }
+.feat-c::before { content:''; position:absolute; top:0; left:0; width:3px; height:0; background:var(--gold); transition:height .4s; }
+.feat-c:hover { background:var(--dark2); }
+.feat-c:hover::before { height:100%; }
+.feat-n { position:absolute; top:20px; right:24px; font-family:'Bebas Neue',sans-serif; font-size:68px; color:rgba(201,168,76,.05); line-height:1; transition:color .3s; }
+.feat-c:hover .feat-n { color:rgba(201,168,76,.11); }
+.feat-ico { width:46px; height:46px; color:var(--gold); margin-bottom:26px; }
+.feat-ttl { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:10px; }
+.feat-tx { font-size:13px; line-height:1.75; color:var(--gray); }
+
+/* ─── WORKS — Bento Grid ─── */
+.works-sec { padding:clamp(60px,8vh,100px) 0; background:var(--dark); }
+.works-hdr { padding:0 clamp(24px,6vw,100px) clamp(36px,5vh,60px); }
+.bento {
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 340px 260px;
+  gap:4px;
+  padding:0 clamp(24px,6vw,100px);
+  max-width:100%;
+  overflow:hidden;
+}
+.b-item { position:relative; overflow:hidden; cursor:pointer; }
+.b-item img { width:100%; height:100%; object-fit:cover; transition:transform .7s ease, filter .4s; filter:grayscale(35%); display:block; }
+.b-item:hover img { transform:scale(1.06); filter:grayscale(0%); }
+.b-item:nth-child(1) { grid-column:span 4; grid-row:span 2; }
+.b-item:nth-child(2) { grid-column:span 5; }
+.b-item:nth-child(3) { grid-column:span 3; }
+.b-item:nth-child(4) { grid-column:span 3; }
+.b-item:nth-child(5) { grid-column:span 3; }
+.b-item:nth-child(6) { grid-column:span 3; }
+.b-item:nth-child(7) { grid-column:span 2; }
+.b-ov {
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(8,8,8,.95) 0%, rgba(8,8,8,.3) 50%, transparent 100%);
+  display:flex; align-items:flex-end; padding:20px 22px;
+  opacity:0; transition:opacity .35s;
+}
+.b-item:hover .b-ov { opacity:1; }
+.b-lbl { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+.b-num { position:absolute; top:16px; left:18px; font-size:10px; letter-spacing:2px; color:var(--gold); opacity:.7; }
+
+/* ─── INTERACTIVE ELEVATOR ─── */
+.elev-sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); background:var(--black); }
+.elev-wrap { display:grid; grid-template-columns:1fr 1.1fr; gap:clamp(40px,6vw,100px); align-items:center; margin-top:60px; }
+.elev-canvas { position:relative; overflow:hidden; max-width:100%; }
+.elev-svg-wrap { width:100%; max-width:500px; margin:0 auto; }
+.elev-svg-wrap svg { width:100%; height:auto; }
+
+/* Hotspot dots */
+.hs {
+  position:absolute; cursor:pointer;
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(201,168,76,.15); border:1.5px solid var(--gold);
+  display:flex; align-items:center; justify-content:center;
+  transition:background .3s, transform .3s;
+  animation:pulse-hs 2.5s ease-in-out infinite;
+}
+.hs::after { content:''; width:8px; height:8px; border-radius:50%; background:var(--gold); }
+.hs:hover, .hs.sel { background:var(--gold); transform:scale(1.25); animation:none; }
+.hs:hover::after, .hs.sel::after { background:var(--black); }
+@keyframes pulse-hs {
+  0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.5)}
+  50%{box-shadow:0 0 0 12px rgba(201,168,76,0)}
+}
+.hs-1 { top:6%;  left:62%; }
+.hs-2 { top:22%; left:72%; }
+.hs-3 { top:42%; left:18%; }
+.hs-4 { top:58%; left:68%; }
+.hs-5 { top:75%; left:30%; }
+.hs-6 { top:85%; left:55%; }
+
+.elev-info { }
+.elev-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; }
+.etab {
+  padding:8px 18px; font-size:10px; letter-spacing:2.5px; text-transform:uppercase;
+  background:none; border:1px solid rgba(201,168,76,.2); color:var(--gray); cursor:pointer;
+  transition:all .3s; font-family:'DM Sans',sans-serif;
+}
+.etab.act { background:var(--gold); color:var(--black); border-color:var(--gold); }
+.elev-panel { display:none; }
+.elev-panel.act { display:block; }
+.ep-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(28px,4vw,46px); letter-spacing:3px; color:var(--white); margin-bottom:14px; }
+.ep-title span { color:var(--gold); }
+.ep-text { font-size:14px; line-height:1.8; color:var(--gray-light); margin-bottom:24px; }
+.ep-specs { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:rgba(201,168,76,.1); margin-bottom:28px; }
+.ep-sp { background:var(--dark); padding:14px 18px; }
+.ep-sk { font-size:8.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-dim); margin-bottom:4px; }
+.ep-sv { font-size:13px; color:var(--white); }
+
+/* ─── ABOUT SPLIT ─── */
+.about-wrap { display:grid; grid-template-columns:1fr 1fr; gap:clamp(40px,7vw,100px); align-items:center; padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.ab-vis { position:relative; height:clamp(360px,50vw,560px); }
+.ab-img { width:75%; height:100%; object-fit:cover; position:absolute; right:0; top:0; filter:grayscale(20%); }
+.ab-box { position:absolute; left:0; bottom:-24px; width:clamp(130px,18vw,190px); height:clamp(130px,18vw,190px); background:var(--gold); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ab-n { font-family:'Bebas Neue',sans-serif; font-size:clamp(44px,6vw,70px); color:var(--black); line-height:1; }
+.ab-l { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--black); text-align:center; }
+.ab-line { position:absolute; top:-18px; left:22%; width:1px; height:56px; background:var(--gold); }
+.ab-txt p { font-size:14.5px; line-height:1.85; color:var(--gray-light); margin-bottom:18px; }
+.ab-txt p:last-of-type { margin-bottom:36px; }
+
+/* ─── CTA BAND ─── */
+.cta-b {
+  padding:clamp(60px,10vh,110px) clamp(24px,6vw,100px);
+  background:var(--dark);
+  display:flex; align-items:center; justify-content:space-between; gap:40px; flex-wrap:wrap;
+  border-top:1px solid rgba(201,168,76,.14); border-bottom:1px solid rgba(201,168,76,.14);
+}
+.cta-t { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,4.5vw,62px); line-height:1.1; letter-spacing:2px; }
+.cta-t span { color:var(--gold); }
+
+/* ─── CLIENTS — horizontal scroll logo strip ─── */
+.clients-sec { padding:clamp(60px,8vh,100px) clamp(24px,6vw,100px); overflow:hidden; }
+.logo-strip {
+  display:grid;
+  /* 9 columnas iguales — siempre una sola fila */
+  grid-template-columns: repeat(9, minmax(80px, 1fr));
+  gap:0;
+  margin-top:56px;
+  border:1px solid rgba(201,168,76,.12);
+  overflow-x:auto;
+  scrollbar-width:none;
+  width:100%;
+  max-width:100%;
+}
+.logo-strip::-webkit-scrollbar { display:none; }
+.logo-cell {
+  min-height:150px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--dark);
+  border-right:1px solid rgba(201,168,76,.08);
+  padding:28px 16px; transition:background .3s;
+}
+.logo-cell:last-child { border-right:none; }
+.logo-cell:hover { background:var(--dark2); }
+.logo-cell img {
+  max-width:110px; max-height:72px; width:100%; height:auto;
+  object-fit:contain;
+  filter:brightness(0) invert(.55);
+  transition:filter .35s, transform .3s;
+}
+.logo-cell:hover img {
+  filter:brightness(0) invert(.9) sepia(1) saturate(2) hue-rotate(10deg);
+  transform:scale(1.1);
+}
+.clients-note { margin-top:20px; font-size:12px; color:var(--gray); letter-spacing:1px; text-align:center; }
+
+/* ─── FOOTER ─── */
+footer { background:var(--dark); padding:clamp(50px,7vh,80px) clamp(24px,6vw,100px) 36px; border-top:1px solid rgba(201,168,76,.18); }
+.ft-g { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:clamp(24px,4vw,60px); margin-bottom:52px; }
+.ft-brand p { font-size:13px; line-height:1.75; color:var(--gray); margin-top:14px; max-width:280px; }
+.ft-ttl { font-size:9.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
+.ft-l { display:flex; flex-direction:column; gap:10px; }
+.ft-l a { font-size:13px; color:var(--gray); text-decoration:none; cursor:pointer; transition:color .3s; }
+.ft-l a:hover { color:var(--white); }
+.ft-b { padding-top:28px; border-top:1px solid rgba(255,255,255,.05); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.ft-b p { font-size:10.5px; color:rgba(153,153,153,.45); letter-spacing:.8px; }
+
+/* ════════════════════════════════
+   INNER PAGE HERO
+════════════════════════════════ */
+.pg-hero {
+  height:clamp(320px,50vh,560px); display:flex; align-items:flex-end; overflow:hidden;
+  padding:0 clamp(24px,6vw,100px) clamp(40px,6vh,80px);
+  position:relative; overflow:hidden; background:var(--dark);
+}
+.pg-hero-bg { position:absolute; inset:0; overflow:hidden; }
+.pg-hero-bg img { width:100%; height:100%; object-fit:cover; filter:grayscale(30%); opacity:.35; }
+.pg-hero-bg::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(8,8,8,.92) 40%, rgba(8,8,8,.6) 100%); }
+/* Animated shaft lines in page heroes */
+.pg-shaft { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+.pg-shaft svg { width:100%; height:100%; max-width:100%; }
+.pg-c { position:relative; z-index:2; }
+.pg-eye { font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; display:flex; align-items:center; gap:14px; }
+.pg-eye::before { content:''; width:28px; height:1px; background:var(--gold); }
+.pg-ttl { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,108px); letter-spacing:3px; line-height:.9; }
+
+/* ════════════════════════════════
+   EMPRESA
+════════════════════════════════ */
+.emp-wrap { display:grid; grid-template-columns:1fr 1.3fr; gap:clamp(40px,6vw,80px); padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); align-items:start; }
+.emp-sticky { position:sticky; top:90px; }
+.big-q { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(20px,2.5vw,32px); color:var(--gold); line-height:1.45; padding-left:28px; position:relative; margin-bottom:36px; }
+.big-q::before { content:'"'; position:absolute; left:0; top:-8px; font-size:72px; color:rgba(201,168,76,.18); line-height:1; }
+.tl { display:flex; flex-direction:column; }
+.tl-i { padding:30px 0 30px 36px; border-left:1px solid rgba(201,168,76,.2); position:relative; }
+.tl-i::before { content:''; position:absolute; left:-4px; top:36px; width:8px; height:8px; background:var(--gold); border-radius:50%; }
+.tl-k { font-size:9.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+.tl-v { font-size:14px; line-height:1.8; color:var(--gray-light); }
+
+/* ════════════════════════════════
+   SERVICIOS
+════════════════════════════════ */
+.srv-g { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:rgba(201,168,76,.1); padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px); }
+.srv-b { background:var(--dark); padding:clamp(36px,5vw,64px) clamp(28px,4vw,56px); position:relative; overflow:hidden; }
+.srv-b::after { content:''; position:absolute; bottom:0; right:0; width:80px; height:80px; background:radial-gradient(circle,rgba(201,168,76,.1),transparent); transition:all .4s; }
+.srv-b:hover::after { width:200px; height:200px; }
+.srv-ico { font-size:44px; margin-bottom:22px; }
+.srv-t { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:3px; margin-bottom:18px; }
+.srv-tx { font-size:13.5px; line-height:1.8; color:var(--gray); }
+.srv-li { margin-top:18px; display:flex; flex-direction:column; gap:8px; }
+.srv-li li { font-size:13px; color:var(--gray); padding-left:18px; position:relative; list-style:none; }
+.srv-li li::before { content:'—'; position:absolute; left:0; color:var(--gold-dim); }
+.srv-imgs { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:28px; }
+.srv-imgs img { width:100%; height:170px; object-fit:cover; filter:grayscale(30%); transition:filter .4s; }
+.srv-imgs img:hover { filter:grayscale(0%); }
+
+/* ════════════════════════════════
+   OBRA NUEVA
+════════════════════════════════ */
+.obra-sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.obra-ph { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:rgba(201,168,76,.1); margin-top:56px; }
+.obra-p { background:var(--dark); padding:clamp(28px,4vw,48px) clamp(20px,3vw,32px); position:relative; transition:background .3s; }
+.obra-p:hover { background:var(--dark2); }
+.ph-n { font-family:'Bebas Neue',sans-serif; font-size:80px; color:rgba(201,168,76,.06); line-height:1; transition:color .3s; }
+.obra-p:hover .ph-n { color:rgba(201,168,76,.13); }
+.ph-t { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; margin-bottom:12px; }
+.ph-tx { font-size:13px; line-height:1.75; color:var(--gray); }
+/* Obra images — cinematic strip */
+.obra-strip { display:grid; grid-template-columns:2fr 1fr 1fr; gap:4px; margin-top:56px; overflow:hidden; max-width:100%; }
+.obra-strip > div { overflow:hidden; position:relative; }
+.obra-strip img { width:100%; height:100%; object-fit:cover; min-height:280px; display:block; filter:grayscale(25%); transition:transform .6s, filter .4s; }
+.obra-strip > div:hover img { transform:scale(1.05); filter:grayscale(0%); }
+.obra-strip > div:first-child img { min-height:380px; }
+
+/* ════════════════════════════════
+   PRODUCTOS
+════════════════════════════════ */
+.prod-sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.prod-tabs { display:flex; gap:0; border-bottom:1px solid rgba(201,168,76,.18); margin-bottom:56px; overflow-x:auto; scrollbar-width:none; }
+.prod-tabs::-webkit-scrollbar { display:none; }
+.ptb { padding:14px 26px; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--gray); cursor:pointer; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .3s,border-color .3s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+.ptb.act { color:var(--gold); border-bottom-color:var(--gold); }
+.ptb:hover { color:var(--white); }
+.pp { display:none; }
+/* Desktop: imagen 1fr / texto 1fr — balanceado */
+.pp.act {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:clamp(40px,6vw,80px);
+  align-items:start;
+}
+.pp-img-wrap {
+  width:100%;
+  aspect-ratio:4/3;
+  overflow:hidden;
+  position:sticky;
+  top:92px;
+}
+.pp-img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+  filter:grayscale(15%);
+  transition:transform .6s, filter .4s;
+}
+.pp-img-wrap:hover .pp-img { transform:scale(1.04); filter:grayscale(0%); }
+.pp-ttl { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,4vw,54px); letter-spacing:3px; margin-bottom:20px; line-height:1; }
+.pp-ttl span { color:var(--gold); }
+.pp-tx { font-size:14px; line-height:1.8; color:var(--gray-light); margin-bottom:28px; }
+.pp-sp { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:rgba(201,168,76,.1); margin-bottom:28px; }
+.sp-i { background:var(--dark); padding:16px 20px; }
+.sp-k { font-size:8.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-dim); margin-bottom:5px; }
+.sp-v { font-size:13.5px; color:var(--white); }
+
+/* ════════════════════════════════
+   CABINAS — Full-bleed mosaic
+════════════════════════════════ */
+.cab-sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.cab-intro { max-width:560px; font-size:15px; line-height:1.8; color:var(--gray-light); margin-bottom:56px; }
+.cab-grid {
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  grid-template-rows:300px 300px;
+  gap:4px;
+  overflow:hidden;
+  max-width:100%;
+}
+.cab-i { position:relative; overflow:hidden; cursor:pointer; }
+.cab-i img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .7s ease, filter .4s; filter:grayscale(30%); }
+.cab-i:hover img { transform:scale(1.07); filter:grayscale(0%); }
+.cab-i:nth-child(1) { grid-column:span 3; }
+.cab-i:nth-child(2) { grid-column:span 2; }
+.cab-i:nth-child(3) { grid-column:span 1; }
+.cab-i:nth-child(4) { grid-column:span 1; }
+.cab-i:nth-child(5) { grid-column:span 2; }
+.cab-i:nth-child(6) { grid-column:span 3; }
+.cab-ov { position:absolute; inset:0; background:linear-gradient(to top,rgba(8,8,8,.9) 0%,transparent 60%); display:flex; flex-direction:column; justify-content:flex-end; padding:20px 22px; opacity:0; transition:opacity .35s; }
+.cab-i:hover .cab-ov { opacity:1; }
+.cab-type { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+.cab-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
+
+/* ════════════════════════════════
+   PLANOS
+════════════════════════════════ */
+.pla-sec { padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); }
+.pla-intro { max-width:580px; font-size:15px; line-height:1.8; color:var(--gray-light); margin-bottom:56px; }
+.pla-g { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:rgba(201,168,76,.1); }
+.pla-c { background:var(--dark); padding:clamp(32px,4vw,48px) clamp(24px,3vw,36px); display:flex; flex-direction:column; gap:18px; transition:background .3s; cursor:pointer; position:relative; }
+.pla-c:hover { background:var(--dark2); }
+.pla-icon { width:52px; height:52px; border:1px solid rgba(201,168,76,.25); display:flex; align-items:center; justify-content:center; color:var(--gold); transition:background .3s,border-color .3s; }
+.pla-c:hover .pla-icon { background:var(--gold); color:var(--black); border-color:var(--gold); }
+.pla-t { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+.pla-d { font-size:12.5px; line-height:1.75; color:var(--gray); }
+.pla-arr { position:absolute; bottom:28px; right:28px; color:var(--gold-dim); transition:transform .3s, color .3s; }
+.pla-c:hover .pla-arr { transform:translate(4px,-4px); color:var(--gold); }
+
+/* ════════════════════════════════
+   CONTACTO
+════════════════════════════════ */
+.con-sec { display:grid; grid-template-columns:1fr 1.2fr; gap:clamp(40px,7vw,100px); padding:clamp(60px,10vh,120px) clamp(24px,6vw,100px); align-items:start; }
+.con-info { position:sticky; top:90px; }
+.cd { display:flex; flex-direction:column; gap:5px; padding:24px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.cd:first-child { padding-top:0; }
+.cd-l { font-size:8.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold-dim); }
+.cd-v { font-size:15px; color:var(--white); }
+.cd-v a { color:inherit; text-decoration:none; transition:color .3s; }
+.cd-v a:hover { color:var(--gold); }
+.con-form { display:flex; flex-direction:column; gap:2px; }
+.fg { display:flex; flex-direction:column; }
+.fr { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+.fg label { font-size:8.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold-dim); padding:13px 18px 0; background:var(--dark); }
+.fg input, .fg textarea, .fg select { background:var(--dark); border:none; border-bottom:2px solid transparent; color:var(--white); padding:6px 18px 14px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .3s,background .3s; width:100%; resize:none; -webkit-appearance:none; }
+.fg input:focus, .fg textarea:focus { border-bottom-color:var(--gold); background:var(--dark2); }
+.fg textarea { min-height:120px; }
+.f-sub { margin-top:10px; display:flex; justify-content:flex-end; }
+
+/* ════════════════════════════════
+   RESPONSIVE 1100px
+════════════════════════════════ */
+@media(max-width:1100px) {
+  .feat-g { grid-template-columns:1fr 1fr; }
+  .ft-g { grid-template-columns:1fr 1fr; }
+  .elev-wrap { grid-template-columns:1fr; }
+  .elev-svg-wrap { max-width:380px; }
+  .bento { grid-template-rows:260px 220px; }
+  /* productos: imagen algo más pequeña */
+  .pp.act { grid-template-columns:1fr; }
+  .pp-img-wrap { aspect-ratio:16/9; position:static; }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE 900px
+════════════════════════════════ */
+@media(max-width:900px) {
+  .about-wrap { grid-template-columns:1fr; }
+  .emp-wrap { grid-template-columns:1fr; }
+  .srv-g { grid-template-columns:1fr; }
+  .obra-ph { grid-template-columns:1fr 1fr; }
+  .pp.act { grid-template-columns:1fr; }
+  .pp-img-wrap { aspect-ratio:16/9; position:static; }
+  .con-sec { grid-template-columns:1fr; }
+  .cab-grid { grid-template-columns:repeat(3,1fr); grid-template-rows:auto; }
+  .cab-i:nth-child(n) { grid-column:span 1; min-height:190px; }
+  .cab-i:nth-child(1) { grid-column:span 2; }
+  .obra-strip { grid-template-columns:1fr 1fr; }
+  .bento { grid-template-columns:repeat(6,1fr); grid-template-rows:220px 200px; }
+  .b-item:nth-child(1) { grid-column:span 3; grid-row:span 2; }
+  .b-item:nth-child(2) { grid-column:span 3; }
+  .b-item:nth-child(3) { grid-column:span 2; }
+  .b-item:nth-child(4) { grid-column:span 2; }
+  .b-item:nth-child(5) { grid-column:span 2; }
+  .b-item:nth-child(6) { grid-column:span 3; }
+  .b-item:nth-child(7) { grid-column:span 1; }
+  .h-stats { display:none; }
+  .pla-g { grid-template-columns:1fr 1fr; }
+  .logo-cell { flex:1 0 33%; }
+  .logo-divider { display:none; }
+  .logo-s { display:none; }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE 768px
+════════════════════════════════ */
+@media(max-width:768px) {
+  nav { display:none; }
+  .ham { display:flex; }
+  header { padding:0 20px; }
+  .hero { justify-content: center; }
+  .feat-g { grid-template-columns:1fr; }
+  .obra-ph { grid-template-columns:1fr; }
+  .bento { grid-template-columns:1fr 1fr; grid-template-rows:auto; }
+  .b-item:nth-child(n) { grid-column:span 1; min-height:180px; }
+  .b-item:nth-child(1) { grid-column:span 2; min-height:240px; }
+  .obra-strip { grid-template-columns:1fr; }
+  .obra-strip img { min-height:200px; }
+  .cab-grid { grid-template-columns:1fr 1fr; grid-template-rows:auto; }
+  .cab-i:nth-child(n) { grid-column:span 1 !important; min-height:180px; }
+  .ft-g { grid-template-columns:1fr; }
+  .pla-g { grid-template-columns:1fr; }
+  /* logo-strip: grid auto-scroll, sin min-width fijo */
+  .fr { grid-template-columns:1fr; }
+  .pp.act { grid-template-columns:1fr; }
+  .pp-img-wrap { aspect-ratio:16/9; position:static; }
+  .prod-sec { padding:clamp(40px,6vh,72px) clamp(16px,4vw,32px); }
+  .prod-tabs { margin-bottom:32px; }
+  /* sections padding reduzco */
+  .obra-sec,.cab-sec,.pla-sec,.clients-sec { padding:clamp(40px,6vh,72px) clamp(16px,4vw,32px); }
+  .con-sec { padding:clamp(40px,6vh,72px) clamp(16px,4vw,32px); }
+  .about-wrap { padding:clamp(40px,6vh,72px) clamp(16px,4vw,32px); }
+  .emp-wrap { padding:clamp(40px,6vh,72px) clamp(16px,4vw,32px); }
+  .cta-b { flex-direction:column; gap:24px; padding:clamp(40px,6vh,60px) clamp(16px,4vw,32px); }
+  footer { padding:clamp(40px,6vh,56px) clamp(16px,4vw,32px) 24px; }
+  .mini-ft { padding:clamp(32px,5vh,48px) clamp(16px,4vw,32px) 20px; }
+  .ep-specs { grid-template-columns:1fr; }
+  .elev-wrap { gap:24px; }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE 480px
+════════════════════════════════ */
+@media(max-width:480px) {
+  .h-acts { flex-direction:column; align-items:flex-start; gap:14px; }
+  .h-title { font-size:clamp(44px,13vw,80px); }
+  .cab-grid { grid-template-columns:1fr; }
+  .cab-i:nth-child(n) { grid-column:1 !important; min-height:220px; }
+  .elev-tabs { gap:4px; }
+  .ft-b { flex-direction:column; text-align:center; gap:8px; }
+
+
+  .pp-img-wrap { aspect-ratio:4/3; }
+
+  .bento { grid-template-columns:1fr !important; grid-template-rows:auto !important; }
+  .b-item:nth-child(n) { grid-column:1 !important; grid-row:auto !important; min-height:200px; }
+  .obra-strip { grid-template-columns:1fr; }
+  .srv-imgs { grid-template-columns:1fr; }
+  .srv-imgs img { height:140px; }
+  .mini-ft-g { grid-template-columns:1fr; }
+}
+
+/* ─── SHARED MINI FOOTER ─── */
+.mini-ft { background:var(--dark); padding:clamp(36px,5vh,60px) clamp(24px,6vw,100px) 28px; border-top:1px solid rgba(201,168,76,.15); }
+.mini-ft-g { display:grid; grid-template-columns:2fr 1fr 1fr; gap:clamp(20px,4vw,50px); margin-bottom:36px; }
+.mini-ft-b { padding-top:24px; border-top:1px solid rgba(255,255,255,.05); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.mini-ft-b p { font-size:10px; color:rgba(153,153,153,.4); }
+@media(max-width:768px) { .mini-ft-g { grid-template-columns:1fr; } }
+
+/* ── Cursor: solo en desktop con mouse real ── */
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+}
+@media (hover: none), (pointer: coarse) {
+  #cur, #cur-ring { display: none !important; }
+  body { cursor: auto !important; }
+  * { cursor: auto !important; }
+}
+
+/* ════════════════════════════════
+   ASCENSOR MOBILE — animación CSS pura
+   Solo visible en ≤768px, esquina derecha del hero
+════════════════════════════════ */
+.hero-elevator-mobile {
+  display: none; /* oculto en desktop */
+}
+
+@media(max-width: 768px) {
+  /* Ocultar el SVG del desktop en mobile */
+  .hero-shaft { opacity: 0; pointer-events: none; }
+
+  /* Mostrar el ascensor mobile */
+  .hero-elevator-mobile {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 56px;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Riel vertical izquierdo */
+  .hem-rail-l {
+    position: absolute;
+    left: 14px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(201,168,76,.35) 10%,
+      rgba(201,168,76,.35) 90%,
+      transparent 100%
+    );
+  }
+
+  /* Riel vertical derecho */
+  .hem-rail-r {
+    position: absolute;
+    right: 14px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(201,168,76,.35) 10%,
+      rgba(201,168,76,.35) 90%,
+      transparent 100%
+    );
+  }
+
+  /* Marcas de piso */
+  .hem-floor {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background: rgba(201,168,76,.18);
+  }
+
+  /* Cabina del ascensor */
+  .hem-car {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 52px;
+    border: 1.5px solid rgba(201,168,76,.75);
+    background: rgba(201,168,76,.05);
+    animation: hem-move 5s cubic-bezier(0.45,0.05,0.55,0.95) infinite;
+  }
+
+  /* Línea central de la puerta */
+  .hem-car::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(201,168,76,.4);
+    transform: translateX(-50%);
+  }
+
+  /* Panel superior de la cabina */
+  .hem-car::after {
+    content: '';
+    position: absolute;
+    left: 4px; right: 4px;
+    top: 5px;
+    height: 8px;
+    background: rgba(201,168,76,.1);
+    border: 1px solid rgba(201,168,76,.25);
+  }
+
+  /* Haz de luz que sigue la cabina */
+  .hem-beam {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 70px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(201,168,76,.12) 40%,
+      rgba(201,168,76,.06) 70%,
+      transparent 100%
+    );
+    animation: hem-beam 5s cubic-bezier(0.45,0.05,0.55,0.95) infinite;
+    pointer-events: none;
+  }
+
+  @keyframes hem-move {
+    0%   { top: 8%; }
+    45%  { top: 72%; }
+    55%  { top: 72%; }
+    100% { top: 8%; }
+  }
+
+  @keyframes hem-beam {
+    0%   { top: calc(8% - 10px); }
+    45%  { top: calc(72% - 10px); }
+    55%  { top: calc(72% - 10px); }
+    100% { top: calc(8% - 10px); }
+  }
+}
+
+@media(max-width: 480px) {
+  .hero-elevator-mobile {
+    width: 44px;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══ HEADER ═══ -->
+<header id="hdr">
+  <a class="logo" onclick="go('home')">
+    <img class="logo-img" src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac">
+    <div class="logo-divider"></div>
+    <div class="logo-text">
+      <span class="logo-m">Micromac</span>
+      <span class="logo-s">Sistemas de Elevación</span>
+    </div>
+  </a>
+  <nav>
+    <a onclick="go('empresa')" data-p="empresa">La Empresa</a>
+    <a onclick="go('servicios')" data-p="servicios">Servicios</a>
+    <a onclick="go('obranueva')" data-p="obranueva">Obra Nueva</a>
+    <a onclick="go('productos')" data-p="productos">Productos</a>
+    <a onclick="go('cabinas')" data-p="cabinas">Cabinas</a>
+    <a onclick="go('planos')" data-p="planos">Planos</a>
+    <a class="nav-cta" onclick="go('contacto')">Contáctenos</a>
+  </nav>
+  <div class="ham" id="ham" onclick="toggleMob()"><span></span><span></span><span></span></div>
+</header>
+
+<div class="mob-nav" id="mobnav">
+  <a onclick="go('empresa');toggleMob()">Empresa</a>
+  <a onclick="go('servicios');toggleMob()">Servicios</a>
+  <a onclick="go('obranueva');toggleMob()">Obra Nueva</a>
+  <a onclick="go('productos');toggleMob()">Productos</a>
+  <a onclick="go('cabinas');toggleMob()">Cabinas</a>
+  <a onclick="go('planos');toggleMob()">Planos</a>
+  <a onclick="go('contacto');toggleMob()">Contacto</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HOME
+═══════════════════════════════════════════ -->
+<div class="page act" id="page-home">
+
+  <!-- HERO with real image + animated shaft -->
+  <section class="hero">
+    <div class="hero-img"></div>
+
+    <!-- Animated SVG elevator shaft -->
+    <div class="hero-shaft">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#C9A84C" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#C9A84C" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Main shaft -->
+        <line x1="1060" y1="0" x2="1060" y2="900" stroke="#C9A84C" stroke-width="0.7" opacity="0.12"/>
+        <line x1="1180" y1="0" x2="1180" y2="900" stroke="#C9A84C" stroke-width="0.7" opacity="0.07"/>
+        <!-- Horizontal guides -->
+        <line x1="900" y1="200" x2="1280" y2="200" stroke="#C9A84C" stroke-width="0.5" opacity="0.08"/>
+        <line x1="900" y1="600" x2="1280" y2="600" stroke="#C9A84C" stroke-width="0.5" opacity="0.08"/>
+        <!-- Shaft box walls -->
+        <rect x="1020" y="60" width="200" height="780" stroke="#C9A84C" stroke-width="1" fill="none" opacity="0.09"/>
+        <!-- Inner shaft rail left -->
+        <line x1="1040" y1="60" x2="1040" y2="840" stroke="#C9A84C" stroke-width="0.5" opacity="0.15"/>
+        <line x1="1200" y1="60" x2="1200" y2="840" stroke="#C9A84C" stroke-width="0.5" opacity="0.15"/>
+        <!-- Animated elevator car — large, visible -->
+        <g opacity="0.8">
+          <rect x="1045" y="0" width="150" height="110" rx="2" stroke="#C9A84C" stroke-width="1.5" fill="rgba(201,168,76,0.05)">
+            <animateTransform attributeName="transform" type="translate" values="0,100;0,640;0,100" dur="7s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          </rect>
+          <!-- door seam -->
+          <line x1="1120" y1="0" x2="1120" y2="110" stroke="#C9A84C" stroke-width=".8" opacity="0.5">
+            <animateTransform attributeName="transform" type="translate" values="0,100;0,640;0,100" dur="7s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          </line>
+          <!-- panel indicator top -->
+          <rect x="1065" y="8" width="110" height="16" rx="1" stroke="#C9A84C" stroke-width=".5" fill="rgba(201,168,76,0.08)">
+            <animateTransform attributeName="transform" type="translate" values="0,100;0,640;0,100" dur="7s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          </rect>
+        </g>
+        <!-- Travelling light beam -->
+        <rect x="1020" y="0" width="200" height="80" fill="url(#sg)" opacity="0.08">
+          <animateTransform attributeName="transform" type="translate" values="0,0;0,780;0,0" dur="7s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+        </rect>
+        <!-- Floor notches -->
+        <line x1="1020" y1="200" x2="1220" y2="200" stroke="#C9A84C" stroke-width="1.5" opacity="0.18"/>
+        <line x1="1020" y1="400" x2="1220" y2="400" stroke="#C9A84C" stroke-width="1.5" opacity="0.18"/>
+        <line x1="1020" y1="600" x2="1220" y2="600" stroke="#C9A84C" stroke-width="1.5" opacity="0.18"/>
+        <!-- Diagonal structural accent -->
+        <line x1="750" y1="900" x2="1020" y2="60" stroke="#C9A84C" stroke-width="0.4" opacity="0.05"/>
+      </svg>
+    </div>
+
+    <!-- Ascensor mobile: visible solo en ≤768px -->
+    <div class="hero-elevator-mobile" aria-hidden="true">
+      <div class="hem-rail-l"></div>
+      <div class="hem-rail-r"></div>
+      <!-- Marcas de piso -->
+      <div class="hem-floor" style="top:20%"></div>
+      <div class="hem-floor" style="top:38%"></div>
+      <div class="hem-floor" style="top:56%"></div>
+      <div class="hem-floor" style="top:74%"></div>
+      <!-- Haz de luz -->
+      <div class="hem-beam"></div>
+      <!-- Cabina -->
+      <div class="hem-car"></div>
+    </div>
+
+    <div class="hero-body">
+      <div class="h-eye">Más de 20 años de experiencia</div>
+      <h1 class="h-title">
+        Elevamos<br>
+        <em>tu proyecto</em><br>
+        al siguiente<br>nivel
+      </h1>
+      <p class="h-desc">Diseño, fabricación, instalación y mantenimiento de equipos elevadores de precisión para toda Argentina.</p>
+      <div class="h-acts">
+        <button class="btn-p mag" onclick="go('productos')">
+          Ver Productos
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="btn-g mag" onclick="go('contacto')">Solicitar Presupuesto</button>
+      </div>
+    </div>
+
+    <div class="h-stats">
+      <div><div class="hst-n">+20</div><div class="hst-l">Años de experiencia</div></div>
+      <div><div class="hst-n">24/7</div><div class="hst-l">Soporte técnico</div></div>
+      <div><div class="hst-n">2</div><div class="hst-l">Años de garantía</div></div>
+    </div>
+
+    <div class="scrl"><span>Scroll</span><div class="scrl-l"></div></div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="mq">
+    <div class="mq-t">
+      <span class="mq-i"><span class="mq-dot"></span>Ascensores Eléctricos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Ascensores Hidráulicos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Montacargas</span>
+      <span class="mq-i"><span class="mq-dot"></span>Montavehículos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Rampas Móviles</span>
+      <span class="mq-i"><span class="mq-dot"></span>Modernizaciones</span>
+      <span class="mq-i"><span class="mq-dot"></span>Mantenimiento 24/7</span>
+      <span class="mq-i"><span class="mq-dot"></span>Obra Nueva</span>
+      <span class="mq-i"><span class="mq-dot"></span>Ascensores Eléctricos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Ascensores Hidráulicos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Montacargas</span>
+      <span class="mq-i"><span class="mq-dot"></span>Montavehículos</span>
+      <span class="mq-i"><span class="mq-dot"></span>Rampas Móviles</span>
+      <span class="mq-i"><span class="mq-dot"></span>Modernizaciones</span>
+      <span class="mq-i"><span class="mq-dot"></span>Mantenimiento 24/7</span>
+      <span class="mq-i"><span class="mq-dot"></span>Obra Nueva</span>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="sec" style="background:var(--dark)">
+    <div class="s-eye">Por qué elegirnos</div>
+    <h2 class="s-ttl">Comprometidos con la <span>excelencia</span></h2>
+    <div class="feat-g">
+      <div class="feat-c anim"><div class="feat-n">01</div>
+        <svg class="feat-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="feat-ttl">Profesionales</div>
+        <div class="feat-tx">Equipo especializado para diseñar, presupuestar, fabricar e instalar tu proyecto con precisión.</div>
+      </div>
+      <div class="feat-c anim"><div class="feat-n">02</div>
+        <svg class="feat-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div class="feat-ttl">Garantía</div>
+        <div class="feat-tx">2 años de garantía respaldada por Micromac, empresa con más de 20 años de trayectoria en el rubro.</div>
+      </div>
+      <div class="feat-c anim"><div class="feat-n">03</div>
+        <svg class="feat-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div class="feat-ttl">Mejor Precio</div>
+        <div class="feat-tx">Como fabricantes directos obtenés el mejor precio del mercado. Si tenés otro presupuesto, lo mejoramos.</div>
+      </div>
+      <div class="feat-c anim"><div class="feat-n">04</div>
+        <svg class="feat-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div class="feat-ttl">Diseño Premium</div>
+        <div class="feat-tx">Mano de obra especializada con las mejores materias primas del mercado para tu proyecto.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKS — BENTO GRID -->
+  <section class="works-sec">
+    <div class="works-hdr">
+      <div class="s-eye">Portfolio</div>
+      <h2 class="s-ttl" style="margin-bottom:0">Últimos <span>trabajos</span></h2>
+    </div>
+    <div class="bento">
+      <div class="b-item">
+        <div class="b-num">01</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-1.jpg" alt="Terminación en pintura" onerror="this.parentElement.style.background='#1a1a1a'">
+        <div class="b-ov"><div class="b-lbl">Terminación en pintura</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">02</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-2.jpg" alt="Acero inoxidable" onerror="this.parentElement.style.background='#1a1a1a'">
+        <div class="b-ov"><div class="b-lbl">Acero inoxidable</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">03</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-10.jpg" alt="Vidriado" onerror="this.parentElement.style.background='#222'">
+        <div class="b-ov"><div class="b-lbl">Ascensor vidriado</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">04</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-4.jpg" alt="Tapizado" onerror="this.parentElement.style.background='#222'">
+        <div class="b-ov"><div class="b-lbl">Tapizado interior</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">05</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-5.jpg" alt="Vidriado 2" onerror="this.parentElement.style.background='#222'">
+        <div class="b-ov"><div class="b-lbl">Ascensor vidriado</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">06</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-7.jpg" alt="Madera" onerror="this.parentElement.style.background='#222'">
+        <div class="b-ov"><div class="b-lbl">Revestimiento madera</div></div>
+      </div>
+      <div class="b-item">
+        <div class="b-num">07</div>
+        <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-9.jpg" alt="Panorámico" onerror="this.parentElement.style.background='#222'">
+        <div class="b-ov"><div class="b-lbl">Ascensor panorámico</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE ELEVATOR EXPLAINER -->
+  <section class="elev-sec">
+    <div class="s-eye">Tecnología</div>
+    <h2 class="s-ttl">Conocé nuestros <span>sistemas</span></h2>
+    <div class="elev-wrap">
+      <!-- SVG Interactive Diagram -->
+      <div class="elev-canvas">
+        <div class="elev-svg-wrap">
+          <svg viewBox="0 0 420 580" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="shaft-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C9A84C" stop-opacity="0.05"/><stop offset="100%" stop-color="#C9A84C" stop-opacity="0.12"/></linearGradient>
+              <linearGradient id="car-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2218"/><stop offset="100%" stop-color="#1a1510"/></linearGradient>
+              <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C9A84C" stop-opacity="0"/><stop offset="50%" stop-color="#C9A84C" stop-opacity="0.25"/><stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/></linearGradient>
+            </defs>
+
+            <!-- Building floors -->
+            <line x1="60" y1="540" x2="360" y2="540" stroke="#C9A84C" stroke-width=".5" opacity=".25"/>
+            <line x1="60" y1="430" x2="360" y2="430" stroke="#C9A84C" stroke-width=".5" opacity=".25"/>
+            <line x1="60" y1="320" x2="360" y2="320" stroke="#C9A84C" stroke-width=".5" opacity=".25"/>
+            <line x1="60" y1="210" x2="360" y2="210" stroke="#C9A84C" stroke-width=".5" opacity=".25"/>
+            <line x1="60" y1="100" x2="360" y2="100" stroke="#C9A84C" stroke-width=".5" opacity=".25"/>
+
+            <!-- Floor labels -->
+            <text x="30" y="545" fill="#C9A84C" font-size="11" opacity=".5" font-family="'Bebas Neue',sans-serif" letter-spacing="1">PB</text>
+            <text x="30" y="435" fill="#C9A84C" font-size="11" opacity=".5" font-family="'Bebas Neue',sans-serif" letter-spacing="1">P1</text>
+            <text x="30" y="325" fill="#C9A84C" font-size="11" opacity=".5" font-family="'Bebas Neue',sans-serif" letter-spacing="1">P2</text>
+            <text x="30" y="215" fill="#C9A84C" font-size="11" opacity=".5" font-family="'Bebas Neue',sans-serif" letter-spacing="1">P3</text>
+            <text x="30" y="105" fill="#C9A84C" font-size="11" opacity=".5" font-family="'Bebas Neue',sans-serif" letter-spacing="1">P4</text>
+
+            <!-- Shaft walls -->
+            <rect x="100" y="60" width="160" height="500" fill="url(#shaft-g)" stroke="#C9A84C" stroke-width="1.2" opacity=".7" rx="1"/>
+            <!-- Shaft rails -->
+            <line x1="115" y1="60" x2="115" y2="560" stroke="#C9A84C" stroke-width="1" opacity=".3"/>
+            <line x1="245" y1="60" x2="245" y2="560" stroke="#C9A84C" stroke-width="1" opacity=".3"/>
+
+            <!-- Animated elevator car -->
+            <g id="elevCar">
+              <rect x="116" y="0" width="128" height="95" rx="2" fill="url(#car-g)" stroke="#C9A84C" stroke-width="1.5">
+                <animateTransform attributeName="transform" type="translate" values="0,80;0,440;0,80" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+              </rect>
+              <!-- Car door lines -->
+              <line x1="180" y1="0" x2="180" y2="95" stroke="#C9A84C" stroke-width=".7" opacity=".5">
+                <animateTransform attributeName="transform" type="translate" values="0,80;0,440;0,80" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+              </line>
+              <!-- Car top indicator panel -->
+              <rect x="130" y="7" width="100" height="14" rx="1" fill="#C9A84C" opacity=".12">
+                <animateTransform attributeName="transform" type="translate" values="0,80;0,440;0,80" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+              </rect>
+              <!-- Interior figure -->
+              <ellipse cx="160" cy="68" rx="6" ry="6" fill="#C9A84C" opacity=".2">
+                <animateTransform attributeName="transform" type="translate" values="0,80;0,440;0,80" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+              </ellipse>
+              <rect x="154" y="74" width="12" height="20" rx="2" fill="#C9A84C" opacity=".15">
+                <animateTransform attributeName="transform" type="translate" values="0,80;0,440;0,80" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+              </rect>
+            </g>
+
+            <!-- Light beam following car -->
+            <rect x="100" y="0" width="160" height="80" fill="url(#beam)">
+              <animateTransform attributeName="transform" type="translate" values="0,120;0,480;0,120" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0.05 0.55 0.95;0.45 0.05 0.55 0.95"/>
+            </rect>
+
+            <!-- Machine room top -->
+            <rect x="80" y="20" width="200" height="45" rx="2" fill="#1a1510" stroke="#C9A84C" stroke-width="1" opacity=".7"/>
+            <text x="180" y="48" fill="#C9A84C" font-size="10" text-anchor="middle" font-family="'DM Sans',sans-serif" opacity=".7">Sala de Máquinas</text>
+            <!-- Motor icon -->
+            <circle cx="120" cy="42" r="8" stroke="#C9A84C" stroke-width="1" fill="none" opacity=".5"/>
+            <line x1="112" y1="42" x2="128" y2="42" stroke="#C9A84C" stroke-width="1" opacity=".5"/>
+            <line x1="120" y1="34" x2="120" y2="50" stroke="#C9A84C" stroke-width="1" opacity=".5"/>
+
+            <!-- Cables from machine room -->
+            <line x1="150" y1="65" x2="150" y2="580" stroke="#C9A84C" stroke-width=".8" stroke-dasharray="4 4" opacity=".2"/>
+            <line x1="210" y1="65" x2="210" y2="580" stroke="#C9A84C" stroke-width=".8" stroke-dasharray="4 4" opacity=".2"/>
+
+            <!-- Pit / foso -->
+            <rect x="100" y="545" width="160" height="30" fill="#111" stroke="#C9A84C" stroke-width=".8" opacity=".5" rx="1"/>
+            <text x="180" y="565" fill="#C9A84C" font-size="9" text-anchor="middle" font-family="'DM Sans',sans-serif" opacity=".6">Foso / Pit</text>
+
+            <!-- Control panel on wall -->
+            <rect x="280" y="290" width="55" height="80" rx="2" fill="#1a1510" stroke="#C9A84C" stroke-width="1" opacity=".7"/>
+            <text x="307" y="308" fill="#C9A84C" font-size="7" text-anchor="middle" font-family="'DM Sans',sans-serif" opacity=".7">CONTROL</text>
+            <rect x="289" y="314" width="8" height="5" rx="1" fill="#C9A84C" opacity=".5"/>
+            <rect x="303" y="314" width="8" height="5" rx="1" fill="#C9A84C" opacity=".3"/>
+            <rect x="317" y="314" width="8" height="5" rx="1" fill="#C9A84C" opacity=".2"/>
+            <rect x="289" y="325" width="36" height="3" rx="1" fill="#C9A84C" opacity=".15"/>
+            <rect x="289" y="333" width="28" height="3" rx="1" fill="#C9A84C" opacity=".15"/>
+            <circle cx="307" cy="352" r="10" stroke="#C9A84C" stroke-width="1" fill="none" opacity=".4"/>
+            <line x1="303" y1="348" x2="311" y2="348" stroke="#C9A84C" stroke-width="1" opacity=".4"/>
+            <line x1="307" y1="344" x2="307" y2="352" stroke="#C9A84C" stroke-width="1" opacity=".4"/>
+
+            <!-- Door mechanism at floors (right side) -->
+            <g opacity=".5">
+              <rect x="262" y="100" width="20" height="40" rx="1" stroke="#C9A84C" stroke-width=".8" fill="none"/>
+              <rect x="262" y="210" width="20" height="40" rx="1" stroke="#C9A84C" stroke-width=".8" fill="none"/>
+              <rect x="262" y="320" width="20" height="40" rx="1" stroke="#C9A84C" stroke-width=".8" fill="none"/>
+              <rect x="262" y="430" width="20" height="40" rx="1" stroke="#C9A84C" stroke-width=".8" fill="none"/>
+              <rect x="262" y="500" width="20" height="40" rx="1" stroke="#C9A84C" stroke-width=".8" fill="none"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Hotspots positioned over the SVG -->
+        <div class="hs hs-1 mag" onclick="selHS(0)" data-i="0"></div>
+        <div class="hs hs-2 mag" onclick="selHS(1)" data-i="1"></div>
+        <div class="hs hs-3 mag" onclick="selHS(2)" data-i="2"></div>
+        <div class="hs hs-4 mag" onclick="selHS(3)" data-i="3"></div>
+        <div class="hs hs-5 mag" onclick="selHS(4)" data-i="4"></div>
+        <div class="hs hs-6 mag" onclick="selHS(5)" data-i="5"></div>
+      </div>
+
+      <!-- Info panels -->
+      <div class="elev-info">
+        <div class="elev-tabs">
+          <button class="etab act mag" onclick="selHS(0)">Sala Máq.</button>
+          <button class="etab mag" onclick="selHS(1)">Cabina</button>
+          <button class="etab mag" onclick="selHS(2)">Panel</button>
+          <button class="etab mag" onclick="selHS(3)">Puertas</button>
+          <button class="etab mag" onclick="selHS(4)">Cables</button>
+          <button class="etab mag" onclick="selHS(5)">Foso</button>
+        </div>
+
+        <div class="elev-panel act" id="ep-0">
+          <div class="ep-title">Sala de <span>Máquinas</span></div>
+          <div class="ep-text">El motor eléctrico o la central hidráulica se ubican en la sala de máquinas. Controla el movimiento, velocidad y paradas del equipo. Fabricamos con maquinaria de origen europeo para máxima confiabilidad.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Tipo</div><div class="ep-sv">Eléctrico / Hidráulico</div></div>
+            <div class="ep-sp"><div class="ep-sk">Origen</div><div class="ep-sv">Europeo (IT / DE)</div></div>
+            <div class="ep-sp"><div class="ep-sk">Mantenimiento</div><div class="ep-sv">Mensual</div></div>
+            <div class="ep-sp"><div class="ep-sk">Garantía</div><div class="ep-sv">2 años</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('productos')" style="font-size:10px;padding:11px 26px">Ver productos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+
+        <div class="elev-panel" id="ep-1">
+          <div class="ep-title">Cabina <span>Premium</span></div>
+          <div class="ep-text">La cabina es fabricada íntegramente en nuestras instalaciones. Disponible en terminaciones de acero inoxidable, pintura, madera, vidrio o tapizado a medida.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Material</div><div class="ep-sv">Acero / Vidrio / Madera</div></div>
+            <div class="ep-sp"><div class="ep-sk">Fabricación</div><div class="ep-sv">100% local</div></div>
+            <div class="ep-sp"><div class="ep-sk">Capacidad</div><div class="ep-sv">Personalizada</div></div>
+            <div class="ep-sp"><div class="ep-sk">Iluminación</div><div class="ep-sv">LED integrada</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('cabinas')" style="font-size:10px;padding:11px 26px">Ver cabinas <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+
+        <div class="elev-panel" id="ep-2">
+          <div class="ep-title">Panel de <span>Control</span></div>
+          <div class="ep-text">Sistema de control electrónico de última generación. Comando preciso de paradas, velocidades y seguridades. Incluye sistema de comunicación de emergencia.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Control</div><div class="ep-sv">Microprocesador</div></div>
+            <div class="ep-sp"><div class="ep-sk">Comunicación</div><div class="ep-sv">GSM / IP</div></div>
+            <div class="ep-sp"><div class="ep-sk">Seguridades</div><div class="ep-sv">Múltiples</div></div>
+            <div class="ep-sp"><div class="ep-sk">Monitoreo</div><div class="ep-sv">Remoto 24/7</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('contacto')" style="font-size:10px;padding:11px 26px">Consultar <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+
+        <div class="elev-panel" id="ep-3">
+          <div class="ep-title">Puertas <span>Automáticas</span></div>
+          <div class="ep-text">Puertas de apertura automática con detector de presencia. Fabricadas en chapa de acero o vidrio templado. Sistemas de apertura telescópica o central según el proyecto.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Apertura</div><div class="ep-sv">Automática</div></div>
+            <div class="ep-sp"><div class="ep-sk">Detector</div><div class="ep-sv">Infrarrojo</div></div>
+            <div class="ep-sp"><div class="ep-sk">Material</div><div class="ep-sv">Acero / Vidrio</div></div>
+            <div class="ep-sp"><div class="ep-sk">Certificación</div><div class="ep-sv">Norma IRAM</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('contacto')" style="font-size:10px;padding:11px 26px">Consultar <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+
+        <div class="elev-panel" id="ep-4">
+          <div class="ep-title">Sistema de <span>Cables</span></div>
+          <div class="ep-text">Cables de acero de alta resistencia con doble sistema de seguridad. El paracaídas detiene la cabina instantáneamente ante cualquier anomalía en los cables.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Material</div><div class="ep-sv">Acero trenzado</div></div>
+            <div class="ep-sp"><div class="ep-sk">Factor seguridad</div><div class="ep-sv">12:1</div></div>
+            <div class="ep-sp"><div class="ep-sk">Paracaídas</div><div class="ep-sv">Incluido</div></div>
+            <div class="ep-sp"><div class="ep-sk">Inspección</div><div class="ep-sv">Mensual</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('servicios')" style="font-size:10px;padding:11px 26px">Ver servicios <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+
+        <div class="elev-panel" id="ep-5">
+          <div class="ep-title">Foso y <span>Amortiguadores</span></div>
+          <div class="ep-text">El foso alberga los amortiguadores hidráulicos que detienen la cabina en caso de sobrecarrera. Profundidad calculada según normativa IRAM y Ordenanza Municipal.</div>
+          <div class="ep-specs">
+            <div class="ep-sp"><div class="ep-sk">Amortiguadores</div><div class="ep-sv">Hidráulicos</div></div>
+            <div class="ep-sp"><div class="ep-sk">Normativa</div><div class="ep-sv">IRAM / GCBA</div></div>
+            <div class="ep-sp"><div class="ep-sk">Profundidad</div><div class="ep-sv">Según proyecto</div></div>
+            <div class="ep-sp"><div class="ep-sk">Drenaje</div><div class="ep-sv">Incluido</div></div>
+          </div>
+          <button class="btn-p mag" onclick="go('planos')" style="font-size:10px;padding:11px 26px">Ver planos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <div class="about-wrap">
+    <div class="ab-vis">
+      <img class="ab-img" src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-3.jpg" alt="Micromac" onerror="this.style.background='#222'">
+      <div class="ab-box"><div class="ab-n">20+</div><div class="ab-l">Años en<br>el rubro</div></div>
+      <div class="ab-line"></div>
+    </div>
+    <div class="ab-txt">
+      <div class="s-eye">La Empresa</div>
+      <h2 class="s-ttl" style="margin-bottom:28px">Calidad y <span>seguridad</span><br>ante todo</h2>
+      <p>Micromac es una empresa posicionada en el sector de la elevación y la accesibilidad que diseña y fabrica todo tipo de soluciones de elevación para personas y cargas.</p>
+      <p>Con más de 20 años de experiencia, trabajamos para un público exigente que demanda la máxima calidad y seguridad, con responsabilidad para el usuario final.</p>
+      <p>Desde sus comienzos, Micromac ha emprendido un camino de ascenso guiado por los objetivos de excelencia, investigación y desarrollo.</p>
+      <button class="btn-p mag" onclick="go('empresa')">Conocer más <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-b">
+    <h2 class="cta-t">¿Tenés un proyecto<br>en <span>mente</span>?</h2>
+    <button class="btn-p mag" onclick="go('contacto')" style="padding:18px 44px">Solicitar asesoramiento <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+  </div>
+
+  <!-- CLIENTS -->
+  <section class="clients-sec">
+    <div class="s-eye">Clientes</div>
+    <h2 class="s-ttl" style="margin-bottom:0">Confían en <span>nosotros</span></h2>
+    <div class="logo-strip">
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/1.png" alt="C1"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/2.png" alt="C2"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/3.png" alt="C3"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/4.png" alt="C4"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/5.png" alt="C5"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/6.png" alt="C6"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/7.png" alt="C7"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/8.png" alt="C8"></div>
+      <div class="logo-cell"><img src="https://www.ascensoresmicromac.com/images/clientes/9.png" alt="C9"></div>
+    </div>
+    <p class="clients-note">Instalaciones en todo el territorio argentino — desde Buenos Aires hasta cada provincia.</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="ft-g">
+      <div class="ft-brand">
+        <img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;">
+        <p>Diseño, fabricación, instalación y mantenimiento de equipos elevadores. Washington 174, Avellaneda CP 1874, Buenos Aires.</p>
+      </div>
+      <div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('obranueva')">Obra Nueva</a><a onclick="go('productos')">Productos</a><a onclick="go('cabinas')">Cabinas</a><a onclick="go('planos')">Planos</a></div></div>
+      <div><div class="ft-ttl">Productos</div><div class="ft-l"><a onclick="go('productos')">Ascensores Eléctricos</a><a onclick="go('productos')">Ascensores Hidráulicos</a><a onclick="go('productos')">Montacargas</a><a onclick="go('productos')">Montavehículos</a><a onclick="go('productos')">Rampas Móviles</a></div></div>
+      <div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a><a href="#">Washington 174, Avellaneda</a><a href="#">Buenos Aires, Argentina</a></div></div>
+    </div>
+    <div class="ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p><p>Todos los derechos reservados</p></div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     EMPRESA
+═══════════════════════════════════════════ -->
+<div class="page" id="page-empresa">
+  <div class="pg-hero">
+    <div class="pg-hero-bg">
+      <img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-8.jpg" alt="bg">
+    </div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="1100" y1="0" x2="1100" y2="560" stroke="#C9A84C" stroke-width="1" opacity=".12"/>
+      <line x1="1220" y1="0" x2="1220" y2="560" stroke="#C9A84C" stroke-width=".6" opacity=".07"/>
+      <rect x="1060" y="20" width="120" height="80" stroke="#C9A84C" stroke-width="1.2" fill="rgba(201,168,76,0.05)" opacity=".8">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,400;0,0" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Quiénes somos</div><h1 class="pg-ttl">La <span class="gold">Empresa</span></h1></div>
+  </div>
+  <div class="emp-wrap">
+    <div class="emp-sticky">
+      <div class="big-q">Más de 20 años elevando estándares de calidad en Argentina.</div>
+      <div class="divider"></div>
+      <p style="font-size:14px;line-height:1.85;color:var(--gray)">Micromac es una empresa posicionada en el sector de la elevación y la accesibilidad. Actualmente sus productos están presentes en instalaciones de toda la Argentina.</p>
+      <button class="btn-p mag" onclick="go('contacto')" style="margin-top:36px">Contactarnos <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+    </div>
+    <div class="tl">
+      <div class="tl-i anim"><div class="tl-k">Nuestra historia</div><div class="tl-v">Desde sus comienzos, Micromac ha emprendido un camino de ascenso guiado por los objetivos de excelencia, investigación y desarrollo, con un concepto de servicio que se extiende desde el asesoramiento inicial hasta la atención posventa.</div></div>
+      <div class="tl-i anim"><div class="tl-k">Innovación continua</div><div class="tl-v">El desarrollo técnico de nuestros productos y los proyectos de ingeniería personalizados son la actividad principal de la compañía, con el objetivo de satisfacer las necesidades del mercado con tecnología de vanguardia.</div></div>
+      <div class="tl-i anim"><div class="tl-k">Posicionamiento</div><div class="tl-v">Como resultado de esta política, Micromac goza de un posicionamiento firme y destacado. Trabajamos para un público exigente que demanda la máxima calidad y seguridad con responsabilidad para el usuario final.</div></div>
+      <div class="tl-i anim"><div class="tl-k">Alcance nacional</div><div class="tl-v">Nuestros productos están presentes en instalaciones de toda la Argentina, desde Avellaneda, Buenos Aires, hacia cada rincón del país que necesita soluciones de elevación de primer nivel.</div></div>
+    </div>
+  </div>
+  <div class="cta-b"><h2 class="cta-t">¿Tenés un proyecto en <span>mente</span>?</h2><button class="btn-p mag" onclick="go('contacto')" style="flex-shrink:0;padding:18px 44px">Contactarnos <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('productos')">Productos</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SERVICIOS
+═══════════════════════════════════════════ -->
+<div class="page" id="page-servicios">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/servicios/conservacion1.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <rect x="1060" y="40" width="90" height="70" stroke="#C9A84C" stroke-width="1" fill="rgba(201,168,76,0.04)" opacity=".7">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,380;0,0" dur="4.5s" repeatCount="indefinite"/>
+      </rect>
+      <line x1="1080" y1="0" x2="1080" y2="560" stroke="#C9A84C" stroke-width=".8" opacity=".1"/>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Lo que ofrecemos</div><h1 class="pg-ttl">Nuestros <span class="gold">Servicios</span></h1></div>
+  </div>
+  <div class="srv-g">
+    <div class="srv-b anim">
+      <div class="srv-ico">⚙️</div>
+      <div class="srv-t">Modernizaciones</div>
+      <div class="srv-tx">Con el pasar de los años y el surgimiento de nuevas tecnologías es importante modernizar según las necesidades del edificio.</div>
+      <ul class="srv-li"><li>Antigüedad, desgaste o falta de repuestos</li><li>Nuevas necesidades funcionales del usuario</li><li>Criterios estéticos y de diseño</li><li>Mejora de eficiencia energética</li><li>Adaptación a normativa vigente</li></ul>
+      <div class="srv-imgs">
+        <img src="https://www.ascensoresmicromac.com/images/servicios/modernizaciones_antes.jpg" alt="Antes">
+        <img src="https://www.ascensoresmicromac.com/images/servicios/modernizaciones_despues.jpg" alt="Después">
+      </div>
+    </div>
+    <div class="srv-b anim">
+      <div class="srv-ico">🛡️</div>
+      <div class="srv-t">Conservación</div>
+      <div class="srv-tx">M.C.B.A. Matrícula N° 1040 (Ord. 49.308). Mantenimiento garantizado para equipos Micromac y de terceros. Inspección mensual y soporte 24/7 los 365 días del año.</div>
+      <ul class="srv-li"><li>Inspección mensual de todos los puntos críticos</li><li>Servicio 24hs / 365 días</li><li>Para edificios, hoteles, empresas e industrias</li><li>Cobertura para equipos de cualquier marca</li></ul>
+      <div class="srv-imgs">
+        <img src="https://www.ascensoresmicromac.com/images/servicios/conservacion1.jpg" alt="Conservación 1">
+        <img src="https://www.ascensoresmicromac.com/images/servicios/conservacion2.jpg" alt="Conservación 2">
+      </div>
+    </div>
+  </div>
+  <div class="cta-b"><h2 class="cta-t">¿Necesitás <span>mantenimiento</span>?</h2><button class="btn-p mag" onclick="go('contacto')" style="flex-shrink:0;padding:18px 44px">Solicitar servicio <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('productos')">Productos</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OBRA NUEVA
+═══════════════════════════════════════════ -->
+<div class="page" id="page-obranueva">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-1.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="900" y1="0" x2="900" y2="560" stroke="#C9A84C" stroke-width="1" opacity=".1"/>
+      <line x1="970" y1="0" x2="970" y2="560" stroke="#C9A84C" stroke-width=".6" opacity=".07"/>
+      <rect x="910" y="20" width="50" height="40" stroke="#C9A84C" stroke-width="1" fill="rgba(201,168,76,0.06)" opacity=".8">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,460;0,0" dur="5.5s" repeatCount="indefinite"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Construcción e ingeniería</div><h1 class="pg-ttl">Obra <span class="gold">Nueva</span></h1></div>
+  </div>
+  <section class="obra-sec">
+    <div class="s-eye">Nuestro proceso</div>
+    <h2 class="s-ttl">De la idea al <span>ascensor</span></h2>
+    <p style="max-width:580px;font-size:15px;line-height:1.8;color:var(--gray-light);margin-bottom:0">Diseño, fabricación e instalación de proyectos para cumplir con todos los requerimientos. Trabajamos de principio a fin con total transparencia.</p>
+    <div class="obra-ph">
+      <div class="obra-p anim"><div class="ph-n">01</div><div class="ph-t">Asesoramiento</div><div class="ph-tx">Análisis inicial del proyecto, relevamiento del espacio y definición de las necesidades específicas del cliente.</div></div>
+      <div class="obra-p anim"><div class="ph-n">02</div><div class="ph-t">Diseño</div><div class="ph-tx">Elaboración de planos técnicos y diseño personalizado según dimensiones y requisitos del proyecto.</div></div>
+      <div class="obra-p anim"><div class="ph-n">03</div><div class="ph-t">Fabricación</div><div class="ph-tx">Manufactura con las mejores materias primas del mercado, con control de calidad en cada etapa.</div></div>
+      <div class="obra-p anim"><div class="ph-n">04</div><div class="ph-t">Instalación</div><div class="ph-tx">Instalación profesional por nuestro equipo especializado, habilitación y puesta en marcha.</div></div>
+    </div>
+    <!-- Cinematic strip -->
+    <div class="obra-strip">
+      <div><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-2.jpg" alt="Trabajo"></div>
+      <div><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-6.jpg" alt="Trabajo"></div>
+      <div><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-9.jpg" alt="Trabajo"></div>
+    </div>
+  </section>
+  <div class="cta-b"><h2 class="cta-t">¿Iniciamos tu <span>proyecto</span>?</h2><button class="btn-p mag" onclick="go('contacto')" style="flex-shrink:0;padding:18px 44px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('obranueva')">Obra Nueva</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRODUCTOS
+═══════════════════════════════════════════ -->
+<div class="page" id="page-productos">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/productos/ascensores_electricos.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="1100" y1="0" x2="1100" y2="560" stroke="#C9A84C" stroke-width="1" opacity=".12"/>
+      <rect x="1070" y="30" width="65" height="50" stroke="#C9A84C" stroke-width="1.2" fill="rgba(201,168,76,0.06)" opacity=".85">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,450;0,0" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Catálogo completo</div><h1 class="pg-ttl">Nuestros <span class="gold">Productos</span></h1></div>
+  </div>
+  <section class="prod-sec">
+    <div class="prod-tabs">
+      <button class="ptb act" onclick="pt('electricos',this)">Ascensores Eléctricos</button>
+      <button class="ptb" onclick="pt('hidraulicos',this)">Ascensores Hidráulicos</button>
+      <button class="ptb" onclick="pt('montacargas',this)">Montacargas</button>
+      <button class="ptb" onclick="pt('montavehiculos',this)">Montavehículos</button>
+      <button class="ptb" onclick="pt('rampas',this)">Rampas Móviles</button>
+    </div>
+    <div class="pp act" id="pn-electricos">
+      <div class="pp-img-wrap"><img class="pp-img" src="https://www.ascensoresmicromac.com/images/productos/ascensores_electricos.jpg" alt="Eléctricos" onerror="this.parentElement.style.background='#222'"></div>
+      <div><div class="s-eye">Tipo de producto</div><h2 class="pp-ttl">Ascensores <span>Eléctricos</span></h2><p class="pp-tx">Equipos versátiles y flexibles, recomendados para diferentes recorridos con velocidades medias y altas. Ideales para edificios de múltiples pisos.</p><div class="pp-sp"><div class="sp-i"><div class="sp-k">Tipo</div><div class="sp-v">Motor eléctrico</div></div><div class="sp-i"><div class="sp-k">Velocidad</div><div class="sp-v">Media y alta</div></div><div class="sp-i"><div class="sp-k">Recorrido</div><div class="sp-v">Múltiples opciones</div></div><div class="sp-i"><div class="sp-k">Garantía</div><div class="sp-v">2 años</div></div></div><button class="btn-p mag" onclick="go('contacto')" style="margin-top:28px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+    </div>
+    <div class="pp" id="pn-hidraulicos">
+      <div class="pp-img-wrap"><img class="pp-img" src="https://www.ascensoresmicromac.com/images/productos/ascensores_hidraulicos.jpg" alt="Hidráulicos" onerror="this.parentElement.style.background='#222'"></div>
+      <div><div class="s-eye">Tipo de producto</div><h2 class="pp-ttl">Ascensores <span>Hidráulicos</span></h2><p class="pp-tx">Equipos modernos y silenciosos para instalaciones de recorridos bajos. Viviendas, edificios de poca altura y cargas elevadas como montacargas o montacoches.</p><div class="pp-sp"><div class="sp-i"><div class="sp-k">Tipo</div><div class="sp-v">Hidráulico</div></div><div class="sp-i"><div class="sp-k">Nivel ruido</div><div class="sp-v">Muy silencioso</div></div><div class="sp-i"><div class="sp-k">Ideal</div><div class="sp-v">Poca altura / cargas</div></div><div class="sp-i"><div class="sp-k">Garantía</div><div class="sp-v">2 años</div></div></div><button class="btn-p mag" onclick="go('contacto')" style="margin-top:28px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+    </div>
+    <div class="pp" id="pn-montacargas">
+      <div class="pp-img-wrap"><img class="pp-img" src="https://www.ascensoresmicromac.com/images/productos/montacargas.jpg" alt="Montacargas" onerror="this.parentElement.style.background='#222'"></div>
+      <div><div class="s-eye">Tipo de producto</div><h2 class="pp-ttl">Monta<span>Cargas</span></h2><p class="pp-tx">Dirigido al transporte de carga industrial y comercial. Carga paletizada, carros de hipermercados y cargas industriales. Puede o no incluir personas.</p><div class="pp-sp"><div class="sp-i"><div class="sp-k">Uso</div><div class="sp-v">Industrial / comercial</div></div><div class="sp-i"><div class="sp-k">Capacidad</div><div class="sp-v">Alta carga</div></div><div class="sp-i"><div class="sp-k">Personas</div><div class="sp-v">Opcional</div></div><div class="sp-i"><div class="sp-k">Garantía</div><div class="sp-v">2 años</div></div></div><button class="btn-p mag" onclick="go('contacto')" style="margin-top:28px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+    </div>
+    <div class="pp" id="pn-montavehiculos">
+      <div class="pp-img-wrap">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%;height:100%;">
+          <img style="width:100%;height:100%;object-fit:cover;" src="https://www.ascensoresmicromac.com/images/productos/montavehiculos1.jpg" alt="Montavehículos 1" onerror="this.style.background='#222'">
+          <img style="width:100%;height:100%;object-fit:cover;" src="https://www.ascensoresmicromac.com/images/productos/montavehiculos2.jpg" alt="Montavehículos 2" onerror="this.style.background='#333'">
+        </div>
+      </div>
+      <div><div class="s-eye">Tipo de producto</div><h2 class="pp-ttl">Monta<span>Vehículos</span></h2><p class="pp-tx">Equipos hidráulicos con control electrónico de última generación. Plataforma en acero antideslizante. Central hidráulica de origen italiano con bomba sumergida.</p><div class="pp-sp"><div class="sp-i"><div class="sp-k">Accionamiento</div><div class="sp-v">Hidráulico</div></div><div class="sp-i"><div class="sp-k">Central</div><div class="sp-v">Origen italiano</div></div><div class="sp-i"><div class="sp-k">Control</div><div class="sp-v">Electrónico</div></div><div class="sp-i"><div class="sp-k">Garantía</div><div class="sp-v">2 años</div></div></div><button class="btn-p mag" onclick="go('contacto')" style="margin-top:28px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+    </div>
+    <div class="pp" id="pn-rampas">
+      <div class="pp-img-wrap"><img class="pp-img" src="https://www.ascensoresmicromac.com/images/productos/rampas_moviles.jpg" alt="Rampas" onerror="this.parentElement.style.background='#222'"></div>
+      <div><div class="s-eye">Tipo de producto</div><h2 class="pp-ttl">Rampas <span>Móviles</span></h2><p class="pp-tx">Para optimizar espacios en estacionamientos. Accionamiento hidráulico con chapa antideslizante. Control electrónico en combinación con portones automáticos. Accionamiento manual ante corte de luz.</p><div class="pp-sp"><div class="sp-i"><div class="sp-k">Accionamiento</div><div class="sp-v">Hidráulico</div></div><div class="sp-i"><div class="sp-k">Emergencia</div><div class="sp-v">Manual</div></div><div class="sp-i"><div class="sp-k">Uso</div><div class="sp-v">Estacionamientos</div></div><div class="sp-i"><div class="sp-k">Garantía</div><div class="sp-v">2 años</div></div></div><button class="btn-p mag" onclick="go('contacto')" style="margin-top:28px">Solicitar presupuesto <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+    </div>
+  </section>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('productos')">Productos</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CABINAS
+═══════════════════════════════════════════ -->
+<div class="page" id="page-cabinas">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-10.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="1150" y1="0" x2="1150" y2="560" stroke="#C9A84C" stroke-width=".8" opacity=".1"/>
+      <rect x="1120" y="10" width="60" height="55" stroke="#C9A84C" stroke-width="1" fill="rgba(201,168,76,0.05)" opacity=".7">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,460;0,0" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Diseño interior</div><h1 class="pg-ttl">Nuestras <span class="gold">Cabinas</span></h1></div>
+  </div>
+  <section class="cab-sec">
+    <div class="s-eye">Portfolio de acabados</div>
+    <h2 class="s-ttl">Terminaciones a tu <span>medida</span></h2>
+    <p class="cab-intro">Cada cabina es un proyecto único. Trabajamos con distintos materiales y acabados para adaptar el diseño a la identidad de cada espacio y cliente.</p>
+    <div class="cab-grid">
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-1.jpg" alt="Pintura"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Terminación en pintura</div></div></div>
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-2.jpg" alt="Acero"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Acero inoxidable</div></div></div>
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-10.jpg" alt="Vidrio"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Vidriado</div></div></div>
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-4.jpg" alt="Tapizado"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Tapizado</div></div></div>
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-7.jpg" alt="Madera"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Revestimiento madera</div></div></div>
+      <div class="cab-i"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-9.jpg" alt="Panorámico"><div class="cab-ov"><div class="cab-type">Acabado</div><div class="cab-name">Ascensor panorámico</div></div></div>
+    </div>
+  </section>
+  <div class="cta-b"><h2 class="cta-t">¿Qué acabado <span>necesitás</span>?</h2><button class="btn-p mag" onclick="go('contacto')" style="flex-shrink:0;padding:18px 44px">Consultanos <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('cabinas')">Cabinas</a><a onclick="go('productos')">Productos</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PLANOS
+═══════════════════════════════════════════ -->
+<div class="page" id="page-planos">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-5.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="1050" y1="0" x2="1050" y2="560" stroke="#C9A84C" stroke-width=".8" opacity=".1"/>
+      <rect x="1025" y="30" width="50" height="40" stroke="#C9A84C" stroke-width="1" fill="rgba(201,168,76,0.05)" opacity=".7">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,460;0,0" dur="4.8s" repeatCount="indefinite"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Documentación técnica</div><h1 class="pg-ttl">Planos y <span class="gold">Especificaciones</span></h1></div>
+  </div>
+  <section class="pla-sec">
+    <div class="s-eye">Recursos técnicos</div>
+    <h2 class="s-ttl">Información <span>técnica</span></h2>
+    <p class="pla-intro">Ponemos a tu disposición la documentación técnica necesaria para la planificación e integración de nuestros equipos en proyectos de construcción o reforma.</p>
+    <div class="pla-g">
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="pla-t">Planos Generales</div><div class="pla-d">Documentación técnica general para integración en obra nueva o reformas.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="pla-t">Planos de Foso</div><div class="pla-d">Especificaciones de foso y sala de máquinas para la obra civil.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="pla-t">Planos de Cabina</div><div class="pla-d">Dimensiones y configuraciones disponibles para cada tipo de cabina.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="pla-t">Ficha Técnica</div><div class="pla-d">Especificaciones completas: cargas, velocidades y dimensiones.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="pla-t">Datos Eléctricos</div><div class="pla-d">Requerimientos de alimentación y diagramas eléctricos de instalación.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+      <div class="pla-c anim" onclick="go('contacto')"><div class="pla-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="pla-t">Solicitar Planos</div><div class="pla-d">¿Necesitás planos específicos? Contactanos y te enviamos la documentación.</div><div class="pla-arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div></div>
+    </div>
+  </section>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('planos')">Planos</a><a onclick="go('productos')">Productos</a><a onclick="go('contacto')">Contacto</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CONTACTO
+═══════════════════════════════════════════ -->
+<div class="page" id="page-contacto">
+  <div class="pg-hero">
+    <div class="pg-hero-bg"><img src="https://www.ascensoresmicromac.com/images/trabajos/trabajos-8.jpg" alt="bg"></div>
+    <div class="pg-shaft"><svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice">
+      <line x1="1080" y1="0" x2="1080" y2="560" stroke="#C9A84C" stroke-width=".8" opacity=".1"/>
+      <rect x="1055" y="20" width="50" height="40" stroke="#C9A84C" stroke-width="1" fill="rgba(201,168,76,0.04)" opacity=".7">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,470;0,0" dur="5.2s" repeatCount="indefinite"/>
+      </rect>
+    </svg></div>
+    <div class="pg-c"><div class="pg-eye">Hablemos</div><h1 class="pg-ttl">Con<span class="gold">táctenos</span></h1></div>
+  </div>
+  <section class="con-sec">
+    <div class="con-info">
+      <div class="s-eye">Información de contacto</div>
+      <h2 class="s-ttl" style="font-size:clamp(28px,4vw,52px);margin-bottom:36px">Estamos para <span>ayudarte</span></h2>
+      <p style="font-size:14px;line-height:1.8;color:var(--gray);margin-bottom:36px">No dudes en contactarnos para asesorarte. Respondemos a la brevedad.</p>
+      <div class="cd"><span class="cd-l">Teléfono</span><span class="cd-v"><a href="tel:+541142077700">+54 11 4207 7700</a></span></div>
+      <div class="cd"><span class="cd-l">Email</span><span class="cd-v"><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></span></div>
+      <div class="cd"><span class="cd-l">Dirección</span><span class="cd-v">Washington 174, Avellaneda<br>CP 1874, Buenos Aires</span></div>
+      <div class="cd"><span class="cd-l">Horario</span><span class="cd-v">Lun–Vie 8:00–18:00</span></div>
+      <div class="cd" style="border-bottom:none"><span class="cd-l">Soporte técnico</span><span class="cd-v" style="color:var(--gold)">24hs / 365 días</span></div>
+    </div>
+    <div>
+      <div class="s-eye" style="margin-bottom:28px">Formulario de contacto</div>
+      <div class="con-form">
+        <div class="fr"><div class="fg"><label>Nombre</label><input type="text" placeholder="Tu nombre"></div><div class="fg"><label>Empresa</label><input type="text" placeholder="Tu empresa"></div></div>
+        <div class="fr"><div class="fg"><label>Email</label><input type="email" placeholder="tu@email.com"></div><div class="fg"><label>Teléfono</label><input type="tel" placeholder="+54 11..."></div></div>
+        <div class="fg"><label>Tipo de consulta</label><select><option value="">Seleccionar...</option><option>Presupuesto obra nueva</option><option>Modernización</option><option>Mantenimiento y conservación</option><option>Consulta técnica</option><option>Solicitar planos</option><option>Otro</option></select></div>
+        <div class="fg"><label>Mensaje</label><textarea placeholder="Contanos sobre tu proyecto..."></textarea></div>
+        <div class="f-sub"><button class="btn-p mag" style="padding:16px 48px" onclick="fSub(this)">Enviar consulta <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+      </div>
+    </div>
+  </section>
+  <div class="mini-ft"><div class="mini-ft-g"><div><img src="https://www.ascensoresmicromac.com.ar/images/logo-aside-dark.png" alt="Micromac" style="height:36px;width:auto;display:block;margin-bottom:12px;"><p style="font-size:13px;color:var(--gray);margin-top:10px">Washington 174, Avellaneda CP 1874, Buenos Aires.</p></div><div><div class="ft-ttl">Secciones</div><div class="ft-l"><a onclick="go('empresa')">La Empresa</a><a onclick="go('servicios')">Servicios</a><a onclick="go('productos')">Productos</a><a onclick="go('planos')">Planos</a></div></div><div><div class="ft-ttl">Contacto</div><div class="ft-l"><a href="tel:+541142077700">+54 11 4207 7700</a><a href="mailto:info@ascensoresmicromac.com">info@ascensoresmicromac.com</a></div></div></div><div class="mini-ft-b"><p>© 2026 Micromac — Sistemas Integrales de Elevación S.R.L.</p></div></div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ─── CURSOR (works on desktop only) ─── */
+(function(){
+  var cur = document.getElementById('cur');
+  var crng = document.getElementById('cur-ring');
+  if(!cur || !crng) return;
+  // Detectar touch/mobile por múltiples señales
+  var isTouch = ('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (window.matchMedia && window.matchMedia('(hover:none)').matches);
+  if(isTouch){
+    cur.style.display='none'; crng.style.display='none';
+    document.body.style.cursor='auto'; return;
+  }
+  // Solo en desktop con mouse: activar cursor custom
+  document.body.style.cursor='none';
+  var mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',function(e){
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=mx+'px'; cur.style.top=my+'px';
+  });
+  (function loop(){
+    rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+    crng.style.left=rx+'px'; crng.style.top=ry+'px';
+    requestAnimationFrame(loop);
+  })();
+  function addHov(el){
+    el.addEventListener('mouseenter',function(){ document.body.classList.add('hov'); });
+    el.addEventListener('mouseleave',function(){ document.body.classList.remove('hov'); });
+  }
+  document.querySelectorAll('button,a,[onclick]').forEach(addHov);
+})();
+
+/* ─── MAGNET ─── */
+function applyMagnet(){
+  document.querySelectorAll('.mag').forEach(function(el){
+    el.onmousemove = function(e){
+      var r=el.getBoundingClientRect();
+      var dx=(e.clientX-r.left-r.width/2)*0.28;
+      var dy=(e.clientY-r.top-r.height/2)*0.28;
+      el.style.transform='translate('+dx+'px,'+dy+'px)';
+    };
+    el.onmouseleave = function(){ el.style.transform=''; };
+  });
+}
+applyMagnet();
+
+/* ─── HEADER SCROLL ─── */
+window.addEventListener('scroll',function(){
+  document.getElementById('hdr').classList.toggle('sc',window.scrollY>50);
+},{passive:true});
+
+/* ─── PAGE NAVIGATION ─── */
+function go(name){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('act'); });
+  document.querySelectorAll('nav a[data-p]').forEach(function(a){ a.classList.remove('act'); });
+  var pg = document.getElementById('page-'+name);
+  if(pg){ pg.classList.add('act'); window.scrollTo({top:0,behavior:'smooth'}); }
+  var lnk = document.querySelector('nav a[data-p="'+name+'"]');
+  if(lnk) lnk.classList.add('act');
+  applyMagnet();
+  // re-trigger intersection observer animations on new page
+  document.querySelectorAll('.anim').forEach(function(el){
+    el.style.opacity='0'; el.style.transform='translateY(24px)';
+    io.observe(el);
+  });
+}
+
+/* ─── MOBILE NAV ─── */
+function toggleMob(){
+  var n=document.getElementById('mobnav'), h=document.getElementById('ham');
+  n.classList.toggle('o'); h.classList.toggle('o');
+  document.body.style.overflow=n.classList.contains('o')?'hidden':'';
+}
+
+/* ─── PRODUCTS TABS ─── */
+function pt(id,btn){
+  document.querySelectorAll('.pp').forEach(function(p){ p.classList.remove('act'); });
+  document.querySelectorAll('.ptb').forEach(function(b){ b.classList.remove('act'); });
+  var panel = document.getElementById('pn-'+id);
+  if(panel) panel.classList.add('act');
+  if(btn) btn.classList.add('act');
+}
+
+/* ─── ELEVATOR HOTSPOTS ─── */
+function selHS(i){
+  document.querySelectorAll('.hs').forEach(function(h,idx){ h.classList.toggle('sel',idx===i); });
+  document.querySelectorAll('.elev-panel').forEach(function(p){ p.classList.remove('act'); });
+  document.querySelectorAll('.etab').forEach(function(t,idx){ t.classList.toggle('act',idx===i); });
+  var panel = document.getElementById('ep-'+i);
+  if(panel) panel.classList.add('act');
+}
+
+/* ─── FORM SUBMIT ─── */
+function fSub(btn){
+  var orig = btn.innerHTML;
+  btn.innerHTML='Enviado ✓'; btn.style.background='#2e7d46'; btn.style.pointerEvents='none';
+  setTimeout(function(){
+    btn.innerHTML=orig; btn.style.background=''; btn.style.pointerEvents='';
+  },3000);
+}
+
+/* ─── INTERSECTION OBSERVER (scroll animations) ─── */
+var io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+    }
+  });
+},{threshold:.1});
+
+document.querySelectorAll('.anim,.feat-c,.tl-i,.obra-p,.pla-c').forEach(function(el){
+  el.style.opacity='0';
+  el.style.transform='translateY(24px)';
+  el.style.transition='opacity .6s ease, transform .6s ease';
+  io.observe(el);
+});
+</script>
+</body>
+</html>
